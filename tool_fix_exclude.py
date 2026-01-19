@@ -5,7 +5,7 @@ from tkinter import filedialog, messagebox, ttk
 def main():
     root = tk.Tk()
     root.title("JSON Paragraph Merge Tool")
-    root.geometry("900x500")
+    root.geometry("950x400")
     root.blocks = None
     root.candidates = None
     root.choices = []
@@ -18,7 +18,7 @@ def main():
     preview_frame.pack(fill="x", pady=12)
     left_label = tk.Label(preview_frame, text="", font=("Monospace", 12), anchor="e")
     left_label.pack(side="left")
-    cursor = tk.Label(preview_frame, text="  ↑  ", foreground="red", font=("Monospace", 16, "bold"))
+    cursor = tk.Label(preview_frame, text="•", foreground="red", font=("Monospace", 16, "bold"))
     cursor.pack(side="left")
     right_label = tk.Label(preview_frame, text="", font=("Monospace", 12), anchor="w")
     right_label.pack(side="left")
@@ -32,6 +32,8 @@ def main():
     btn_no_space.pack(side="left", padx=25)
     btn_space = ttk.Button(button_frame, text="Space", width=18)
     btn_space.pack(side="left", padx=25)
+    btn_save = ttk.Button(button_frame, text="Save Progress", width=18)
+    btn_save.pack(side="left", padx=25)
 
     def load_file():
         nonlocal current_index
@@ -144,11 +146,43 @@ def main():
         except Exception as e:
             messagebox.showerror("Save failed", f"Could not write file:\n{str(e)}")
         root.quit()
+
+    def save_progress():
+        if not root.blocks or not root.candidates:
+            return
+        blocks = root.blocks[:]
+        for i, ch in enumerate(root.choices[:current_index]):
+            if ch == "skip":
+                continue
+            cand = root.candidates[i]
+            add_space = (ch == "with_space")
+            sp = " " if add_space else ""
+            blocks[cand["prev_idx"]]["text"] += sp + blocks[cand["cont_idx"]]["text"]
+            del blocks[cand["prev_idx"] + 1 : cand["cont_idx"] + 1]
+        save_path = filedialog.asksaveasfilename(
+            title="Save progress",
+            initialfile="merged_partial.json",
+            defaultextension=".json",
+            filetypes=[("JSON Lines", "*.json"), ("All files", "*.*")])
+        if not save_path:
+            messagebox.showinfo("Cancelled", "Save cancelled")
+            return
+        try:
+            with open(save_path, "w", encoding="utf-8") as f:
+                for block in blocks:
+                    json.dump(block, f, ensure_ascii=False, separators=(", ", ": "))
+                    f.write("\n")
+            messagebox.showinfo("Saved", f"Progress saved:\n{save_path}")
+        except Exception as e:
+            messagebox.showerror("Save failed", f"Could not write file:\n{str(e)}")
+
     btn_skip.config(command=lambda: choose("skip"))
     btn_no_space.config(command=lambda: choose("no_space"))
     btn_space.config(command=lambda: choose("with_space"))
+    btn_save.config(command=save_progress)
     load_file()
     root.mainloop()
 
 if __name__ == "__main__":
     main()
+
