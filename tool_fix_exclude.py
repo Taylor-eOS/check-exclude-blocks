@@ -121,13 +121,13 @@ def main():
             if ch == "skip":
                 continue
             cand = root.candidates[i]
-            add_space = (ch == "with_space")
-            merges.append((cand["prev_idx"], cand["cont_idx"], add_space))
+            add_space = (ch == "with_space")  # "no_space" will be False, still merge
+            merges.append((cand["prev_idx"], cand["cont_idx"], cand["prev_idx"]+1, add_space))
         merges.sort(key=lambda x: x[0], reverse=True)
-        for prev_idx, cont_idx, add_space in merges:
+        for prev_idx, cont_idx, excl_idx, add_space in merges:
             sp = " " if add_space else ""
             blocks[prev_idx]["text"] += sp + blocks[cont_idx]["text"]
-            del blocks[prev_idx + 1 : cont_idx + 1]
+            del blocks[excl_idx:cont_idx+1]  # remove the exclude block and continuation block
         save_path = filedialog.asksaveasfilename(
             title="Save merged file",
             initialfile="merged.json",
@@ -161,7 +161,7 @@ def main():
             del blocks[cand["prev_idx"] + 1 : cand["cont_idx"] + 1]
         save_path = filedialog.asksaveasfilename(
             title="Save progress",
-            initialfile="merged_partial.json",
+            initialfile="merged.json",
             defaultextension=".json",
             filetypes=[("JSON Lines", "*.json"), ("All files", "*.*")])
         if not save_path:
