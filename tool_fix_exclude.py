@@ -7,7 +7,7 @@ ROWS = 8
 def main():
     root=tk.Tk()
     root.title("JSON Paragraph Merge Tool")
-    root.geometry("1100x680")
+    root.geometry("1100x620")
     root.blocks=None
     root.candidates=None
     root.selections=[]
